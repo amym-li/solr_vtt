@@ -112,7 +112,7 @@ See `solr-nested-docs-curl-demo.sh`.
 
 ### Example in Solr
 
-```json
+```javascript
 {
   id: audio1,
   ss_type: islandora_object,
