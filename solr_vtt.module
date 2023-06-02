@@ -1,0 +1,77 @@
+<?php
+
+/**
+ * @file
+ * Provides hook implementations and functions accessible from other modules.
+ */
+
+use Solarium\Core\Query\QueryInterface as SolariumQueryInterface;
+use Drupal\search_api\Query\QueryInterface;
+use Solarium\QueryType\Select\Result\Result;
+use Drupal\views\ViewExecutable;
+
+/**
+ * Implements hook_search_api_field_type_mapping_alter().
+ */
+function solr_vtt_search_api_field_type_mapping_alter(array &$mapping) {
+  // Add mapping from Drupal TypedData to our custom Search API datatype.
+  $mapping['solr_document'][] = 'solr_nested_document';
+}
+
+/**
+ * Implements hook_search_api_solr_converted_query_alter().
+ */
+function solr_vtt_search_api_solr_converted_query_alter(SolariumQueryInterface $solarium_query, QueryInterface $query) {
+  $original_query = $solarium_query->getQuery();
+  if (str_contains($original_query, '*:*')) {
+    return;
+  }
+
+  $parent_condition = 'ss_type:islandora_object';
+  $vtt_text_field = 'ts_vtt_text';
+  $childQuery = $vtt_text_field . ":" . $original_query;
+
+  // The childFilter does not work well with conditions containing spaces.
+  // Use local parameter substitution. 
+  // See https://stackoverflow.com/questions/62057306/using-multiple-childfilters-in-solr-childdoctransformer
+  $solarium_query->addParam('childQuery', $childQuery);
+
+  // Add block join query to the query to search through child documents.
+  $query = $original_query . ' OR _query_:"{!parent which=' . $parent_condition . '}${childQuery}"';
+  $solarium_query->setQuery($query);
+
+  // Add matching child documents to the list of fields to return
+  if (!in_array('id', $solarium_query->getFields())) {
+    // Need to return at least one field belonging to the parent if we want the child documents.
+    $solarium_query->addField('id');
+  }
+  $solarium_query->addField('[child parentFilter=' . $parent_condition . ' childFilter=$childQuery]');
+
+  // \Drupal::logger('solr_vtt')->notice('solarium query after alter: ' . $solarium_query->getQuery());
+  // \Drupal::logger('solr_vtt')->notice('field list after alter: ' . json_encode($solarium_query->getFields()));
+}
+
+/**
+ * Implements hook_views_pre_render().
+ */
+function solr_vtt_views_pre_render(ViewExecutable $view) {
+  if (isset($view->field['vtt'])) {
+    foreach ($view->result as $i => $result) {
+      \Drupal::logger('solr_vtt')->notice('result before: ' . json_encode($result));
+
+      // The childDocuments are returned as an array and then stored within the array containing
+      // results for the VTT field. The result will look something like:
+      // result['field_containing_vtt_child_docs'] = [[[id: child1], [id: child2]]]
+      if (isset($result->{'entity:node/vtt'}[0])) {
+
+        /** @var array $line represents a child document containing data for a VTT cue */
+        foreach ($result->{'entity:node/vtt'}[0] as $i => $line) {
+          $result->{'entity:node/vtt'}[$i] = $line['ts_vtt_text'];
+          // Use $line['ss_start'] to get the cue start time.
+        }
+      }
+
+      \Drupal::logger('solr_vtt')->notice('result after: ' . json_encode($result->{'entity:node/vtt'}));
+    }
+  }
+}
