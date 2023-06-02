@@ -9,6 +9,7 @@ The goal of this module is to provide a method of structurally indexing WebVTT f
 - [Indexing Child Documents in Solr](#indexing-child-documents-in-solr)
   - [Search API Processor Demo](#search-api-processor-demo)
   - [Curl Demo](#curl-demo)
+  - [Example in Solr](#example-in-solr)
   - [Block Join Query](#block-join-query)
   - [Additional Resources for Nested Documents](#additional-resources-for-nested-documents)
 
