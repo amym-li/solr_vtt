@@ -23,7 +23,7 @@ These methods assume [Search API Solr](https://www.drupal.org/project/search_api
 
 1. Install the [File Extractor](https://www.drupal.org/project/file_extractor) module. This is a fork of [Search API Attachments](https://www.drupal.org/project/search_api_attachments).
 1. Go to `/admin/config/media/file-extractor`, and configure settings.
-1. Add fields containing files that need to be indexed to the Search API index.
+1. Go to `/admin/config/search/search-api/index/my-index/fields/add/nojs`. Add fields containing files that need to be indexed.
     - Indexing a VTT file attached to a media belonging to the node, add: `Content » Repository Item Media » Media » Ableplayer Media Caption » Media » File » File » File extractor: extracted file`
     - Indexing documents (e.g. PDFs), add: `Content » Repository Item Media » Media » Document » File » File extractor: extracted file`
 
@@ -36,7 +36,7 @@ These methods assume [Search API Solr](https://www.drupal.org/project/search_api
 ### Using Search API Attachments and Patch
 
 1. Install [Search API Attachments](https://www.drupal.org/project/search_api_attachments) and apply the patch from this [issue](https://www.drupal.org/project/search_api_attachments/issues/3008580#comment-14287351).
-1. Go to `/admin/config/search/search_api_attachments` and configure settings.
+1. Go to `/admin/config/search/search_api_attachments`. Set the extraction method to `Solr Extractor`. Under `Solr Extractor configuration`, select your Solr server.
 1. Go to `/admin/config/search/search-api/index/my-index/fields/add/nojs`. Select fields containing the files that need to be indexed and save.
     - Indexing a VTT file attached to a media belonging to the node, add: `Content » Repository Item Media » Media » Ableplayer Media Caption » Media » File » File » Search API attachments: extracted file`
     - Indexing documents (e.g. PDFs), add: `Content » Repository Item Media » Media » Document » File » Search API attachments: extracted file`
@@ -53,12 +53,18 @@ This approach is essentially the same as the File Extractor method but a patch i
 
 The instructions for this method was detailed originally in this [issue](https://www.drupal.org/project/search_api_attachments/issues/2844979).
 
-1. Install and configure `search_api_solr`.
-1. Install and configure `search_api_attachments` module. Go to `/admin/config/search/search_api_attachments`. Set the extraction method to `Solr Extractor`. Under `Solr Extractor configuration`, select your Solr server.
-1. Go to `/admin/structure/display-modes/view`. Under `Media`, add a view mode called `Search Index`.
-1. Go to `Structure > Media types > Edit Able Player Caption > Manage display`. Under `Custom display settings`, select `Search Index` and save. Select the new `Search Index` tab, and set the format of the Able Player Caption field to `Text extracted from attachment` (this formatter is provided by `search_api_attachments`). Configure the field settings. Note: may want to avoid setting the condition to Hide when Media type is empty – this didn’t work when I tested it but that might have been a configuration issue.
+1. Install [Search API Attachments](https://www.drupal.org/project/search_api_attachments). 
+1. Go to `/admin/config/search/search_api_attachments`. Set the extraction method to `Solr Extractor`. Under `Solr Extractor configuration`, select your Solr server.
+1. Create a new view mode for your media type.
+    1. Go to `/admin/structure/display-modes/view`. Under `Media`, add a view mode called `Search Index`.
+    1. Go to `Structure > Media types > Edit Able Player Caption > Manage display`. Under `Custom display settings`, select `Search Index` and save.
+    1. Select the new `Search Index` tab, and set the format of the `Able Player Caption` field to `Text extracted from attachment` (this formatter is provided by Search API Attachments).
+    1. Configure the field settings if needed. **Note:** may want to avoid setting the condition to `Hide when Media type is empty` -- this didn’t work when I tested it but that might have been a configuration issue.
     - To index PDFs, repeat the same process using the `Document` media type instead of `Able Player Caption`.
-1. Go to `Structure > Content types > Repository Item > Manage display`. Under `Custom display settings`, select `Search Index` and save. Select the new `Search Index` tab. Set the format of the `Repository Item Media` field to `Rendered entity`, and in the settings, set the view mode to `Search Index`.
+1. Create a new view mode for your content type.
+    1. Go to `/admin/structure/display-modes/view`. Under `Content`, add a view mode called `Search Index`.
+    1. Go to `Structure > Content types > Repository Item > Manage display`. Under `Custom display settings`, select `Search Index` and save.
+    1. Select the new `Search Index` tab. Set the format of the `Repository Item Media` field to `Rendered entity`, and in the settings, set the view mode to `Search Index`.
 1. Go to `/admin/config/search/search-api/index/my-index/fields/add/nojs`. Select `Rendered HTML output` and save. Edit the field and set the view mode for each content type to `Search Index`.
 
 
